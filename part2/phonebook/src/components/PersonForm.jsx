@@ -1,18 +1,37 @@
 import React, { useState } from 'react'
+import personsService from '../services/persons'
 
 const PersonForm = ({persons, setPersons}) => {
     const [newName, setNewName] = useState('')
     const [newNumber, setNewNumber] = useState('')
 
-    const addPerson = (event) => {
+    const updatePerson = (event) => {
         event.preventDefault()
     
         if(persons.some(person => person.name === newName)) {
-          alert(`${newName} is already added to phonebook`)
+            const person = persons.find(person => person.name === newName)
+            const changedPerson = { ...person, number: newNumber }
+
+            if(window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)) {
+              personsService
+                .updateNumber(person.id, changedPerson)
+                .then(returnedPerson => {
+                  setPersons(persons.map(person => person.id !== returnedPerson.id ? person : returnedPerson))
+                })
+            }
         } else {
-          setPersons(persons.concat({name: newName, number: newNumber}))
-          setNewName('')
-          setNewNumber('')
+          const newPerson = {
+            name: newName,
+            number: newNumber
+          }
+
+          personsService
+            .create(newPerson)
+            .then(returnedPerson => {
+              setPersons(persons.concat(returnedPerson))
+              setNewName('')
+              setNewNumber('')
+            })
         }
     }
     
@@ -27,7 +46,7 @@ const PersonForm = ({persons, setPersons}) => {
     return (
         <div>
             <h2>Add a New Number</h2>
-            <form onSubmit={addPerson}>
+            <form onSubmit={updatePerson}>
             <div>
                 name: <input onChange={handleNameChange} />
             </div>
