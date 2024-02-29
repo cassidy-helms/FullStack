@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import personsService from '../services/persons'
 
-const PersonForm = ({persons, setPersons}) => {
+const PersonForm = ({persons, setPersons, setMessage}) => {
     const [newName, setNewName] = useState('')
     const [newNumber, setNewNumber] = useState('')
 
@@ -16,7 +16,12 @@ const PersonForm = ({persons, setPersons}) => {
               personsService
                 .updateNumber(person.id, changedPerson)
                 .then(returnedPerson => {
-                  setPersons(persons.map(person => person.id !== returnedPerson.id ? person : returnedPerson))
+                    setPersons(persons.map(person => person.id !== returnedPerson.id ? person : returnedPerson))
+                    updateProperties({text: `Updated ${returnedPerson.name}`, type: 'success'})
+                })
+                .catch(error => {
+                    updateProperties({text: `${changedPerson.name} was already removed from server`, type: `error`})
+                    setPersons(persons.filter(person => person.id !== changedPerson.id))
                 })
             }
         } else {
@@ -28,11 +33,25 @@ const PersonForm = ({persons, setPersons}) => {
           personsService
             .create(newPerson)
             .then(returnedPerson => {
-              setPersons(persons.concat(returnedPerson))
-              setNewName('')
-              setNewNumber('')
+                setPersons(persons.concat(returnedPerson))
+                updateProperties({text: `Added ${returnedPerson.name}`, type: 'success'})
+            })
+            .catch(error => {
+                updateProperties({text: `${newPerson.name} was already removed from server`, type: `error`})
+                setPersons(persons.filter(person => person.id !== newPerson.id))
             })
         }
+    }
+
+    const updateProperties = (message) => {
+        console.log(message)
+        setMessage(message)
+        setNewName('')
+        setNewNumber('')
+
+        setTimeout(() => {
+            setMessage(null)
+        }, 5000)
     }
     
     const handleNameChange = (event) => {
@@ -48,10 +67,10 @@ const PersonForm = ({persons, setPersons}) => {
             <h2>Add a New Number</h2>
             <form onSubmit={updatePerson}>
             <div>
-                name: <input onChange={handleNameChange} />
+                name: <input onChange={handleNameChange} value={newName}/>
             </div>
             <div>
-                number: <input onChange={handleNumberChange} />
+                number: <input onChange={handleNumberChange} value={newNumber}/>
             </div>
             <div>
                 <button type="submit">add</button>
